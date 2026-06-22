@@ -1,0 +1,12 @@
+.idea
+.vscode
+CLAUDE.md
+AGENTS.md
+.DS_Store
+/target
+.cargo/config.toml
+/userspace/ksud/bin/aarch64/ksuinit
+__pycache__
+/dist
+/repack-config.json
+.codex-*
