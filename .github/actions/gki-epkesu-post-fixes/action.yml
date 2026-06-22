@@ -1,0 +1,16 @@
+name: Apply EpkeSU post patch fixes
+description: Apply EpkeSU GKI fixes that must run after optional SUSFS patches
+
+runs:
+  using: composite
+  steps:
+    - name: Fix EpkeSU GKI warnings
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        SELINUX_HIDE="${{ github.workspace }}/kernel/feature/selinux_hide.c"
+        if [ -f "$SELINUX_HIDE" ]; then
+          sed -i 's/if (security_dump_masked_av_fn)$/if (security_dump_masked_av_fn != NULL)/' "$SELINUX_HIDE"
+          sed -i 's/if (context_struct_compute_av_fn) {/if (context_struct_compute_av_fn != NULL) {/' "$SELINUX_HIDE"
+        fi
