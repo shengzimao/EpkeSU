@@ -152,15 +152,28 @@ fun ModulePager(
         },
     )
 
-    if (LocalInterfaceStyle.current == InterfaceStyle.Skrootpro.value) {
-        ModulePagerSkrootpro(
-            uiState = rawUiState,
-            confirmDialogState = rawUiState.confirmDialogState,
-            moduleEvent = viewModel.moduleEvent,
-            actions = actions,
-            bottomInnerPadding = bottomInnerPadding,
-        )
-        return
+    when (LocalInterfaceStyle.current) {
+        InterfaceStyle.Skrootpro.value -> {
+            ModulePagerSkrootpro(
+                uiState = rawUiState,
+                confirmDialogState = rawUiState.confirmDialogState,
+                moduleEvent = viewModel.moduleEvent,
+                actions = actions,
+                bottomInnerPadding = bottomInnerPadding,
+            )
+            return
+        }
+
+        InterfaceStyle.Alpha.value -> {
+            ModulePagerAlpha(
+                uiState = rawUiState,
+                confirmDialogState = rawUiState.confirmDialogState,
+                moduleEvent = viewModel.moduleEvent,
+                actions = actions,
+                bottomInnerPadding = bottomInnerPadding,
+            )
+            return
+        }
     }
 
     when (uiMode) {

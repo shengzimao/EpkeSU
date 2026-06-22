@@ -58,6 +58,7 @@ object ThemeController {
         val uiMode = prefs.getString("ui_mode", UiMode.DEFAULT_VALUE) ?: UiMode.DEFAULT_VALUE
         val defaultPreset = when (uiMode) {
             InterfaceStyle.Skrootpro.value -> ThemePreset.SKROOTPRO
+            InterfaceStyle.Alpha.value -> ThemePreset.ALPHA
             InterfaceStyle.LiquidGlass.value -> ThemePreset.LIQUID_GLASS
             else -> ThemePreset.CLEAN_TOOL
         }

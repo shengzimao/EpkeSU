@@ -9,6 +9,7 @@ import me.weishu.kernelsu.ui.UiMode
 import me.weishu.kernelsu.ui.theme.ThemePreset
 import me.weishu.kernelsu.ui.theme.ThemeSyncStrategy
 import me.weishu.kernelsu.ui.util.CustomWallpaperCrop
+import me.weishu.kernelsu.ui.util.DEFAULT_CUSTOM_STARTUP_SOUND_DURATION_SECONDS
 import me.weishu.kernelsu.ui.util.DEFAULT_CUSTOM_WALLPAPER_OPACITY
 import me.weishu.kernelsu.ui.util.DEFAULT_CUSTOM_WALLPAPER_PASSTHROUGH_OPACITY
 import me.weishu.kernelsu.ui.util.LauncherIconOption
@@ -34,6 +35,7 @@ data class SettingsUiState(
     val customThemePresets: List<CustomThemePreset> = emptyList(),
     val enableWebDebugging: Boolean = false,
     val launcherIcon: String = LauncherIconOption.DEFAULT_VALUE,
+    val customManagerName: String = "",
     val customWallpaperUri: String? = null,
     val customWallpaperOpacity: Float = DEFAULT_CUSTOM_WALLPAPER_OPACITY,
     val customWallpaperCrop: CustomWallpaperCrop = CustomWallpaperCrop(),
@@ -41,6 +43,7 @@ data class SettingsUiState(
     val customWallpaperPassthroughOpacity: Float = DEFAULT_CUSTOM_WALLPAPER_PASSTHROUGH_OPACITY,
     val customStartupAnimationUri: String? = null,
     val customStartupSoundUri: String? = null,
+    val customStartupSoundDurationSeconds: Int = DEFAULT_CUSTOM_STARTUP_SOUND_DURATION_SECONDS,
 
     // Su Compat
     val suCompatStatus: String = "",
@@ -84,6 +87,8 @@ data class SettingsScreenActions(
     val onOpenThemeStore: () -> Unit,
     val onSetUiModeIndex: (Int) -> Unit,
     val onOpenLauncherIcon: () -> Unit,
+    val onEditCustomManagerName: () -> Unit,
+    val onSetCustomManagerName: (String) -> Unit,
     val onPickWallpaper: () -> Unit,
     val onPreviewWallpaper: () -> Unit,
     val onEditWallpaperCrop: () -> Unit,
@@ -104,6 +109,7 @@ data class SettingsScreenActions(
     val onPickStartupSound: () -> Unit,
     val onPreviewStartupSound: () -> Unit,
     val onClearStartupSound: () -> Unit,
+    val onSetStartupSoundDurationSeconds: (Int) -> Unit,
     val onOpenProfileTemplate: () -> Unit,
     val onSetSuCompatMode: (Int) -> Unit,
     val onSetKernelUmountEnabled: (Boolean) -> Unit,

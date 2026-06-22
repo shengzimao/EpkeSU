@@ -48,7 +48,8 @@ import me.weishu.kernelsu.ui.theme.isInDarkTheme
 import me.weishu.kernelsu.ui.util.CustomWallpaperCrop
 import me.weishu.kernelsu.ui.util.DEFAULT_CUSTOM_WALLPAPER_CROP
 import me.weishu.kernelsu.ui.util.loadCustomImageBitmap
-import me.weishu.kernelsu.ui.util.releasePersistableImageReadPermission
+import me.weishu.kernelsu.ui.util.persistCustomImageReference
+import me.weishu.kernelsu.ui.util.releaseCustomImageReference
 import me.weishu.kernelsu.ui.util.sanitizeCustomWallpaperCrop
 import me.weishu.kernelsu.ui.util.takePersistableImageReadPermission
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
@@ -91,17 +92,18 @@ internal fun rememberModuleCardWallpaperState(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         uri ?: return@rememberLauncherForActivityResult
-        val nextUriString = uri.toString()
+        val uriKey = moduleWallpaperUriKey(moduleId)
+        val nextUriString = persistCustomImageReference(context, uri, uriKey)
+            ?: uri.toString().also { takePersistableImageReadPermission(context, uri) }
         val previousUriString = uriString
         val defaultCrop = DEFAULT_CUSTOM_WALLPAPER_CROP
-        takePersistableImageReadPermission(context, uri)
         if (previousUriString != nextUriString) {
-            releasePersistableImageReadPermission(context, previousUriString)
+            releaseCustomImageReference(context, previousUriString)
         }
         uriString = nextUriString
         crop = defaultCrop
-        prefs.edit {
-            putString(moduleWallpaperUriKey(moduleId), nextUriString)
+        prefs.edit(commit = true) {
+            putString(uriKey, nextUriString)
             putModuleCardWallpaperCrop(moduleId, defaultCrop)
         }
         currentOnWallpaperSelected()
@@ -117,15 +119,15 @@ internal fun rememberModuleCardWallpaperState(
             onCropChange = { nextCrop ->
                 val safeCrop = sanitizeCustomWallpaperCrop(nextCrop)
                 crop = safeCrop
-                prefs.edit {
+                prefs.edit(commit = true) {
                     putModuleCardWallpaperCrop(moduleId, safeCrop)
                 }
             },
             onClearWallpaper = {
-                releasePersistableImageReadPermission(context, uriString)
+                releaseCustomImageReference(context, uriString)
                 uriString = null
                 crop = DEFAULT_CUSTOM_WALLPAPER_CROP
-                prefs.edit {
+                prefs.edit(commit = true) {
                     remove(moduleWallpaperUriKey(moduleId))
                     removeModuleCardWallpaperCrop(moduleId)
                 }

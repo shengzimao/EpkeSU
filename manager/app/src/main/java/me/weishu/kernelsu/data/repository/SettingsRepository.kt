@@ -25,6 +25,7 @@ interface SettingsRepository {
     var enableWebDebugging: Boolean
     var autoJailbreak: Boolean
     var launcherIcon: String
+    var customManagerName: String
     var customWallpaperUri: String?
     var customWallpaperOpacity: Float
     var customWallpaperCrop: CustomWallpaperCrop
@@ -32,6 +33,7 @@ interface SettingsRepository {
     var customWallpaperPassthroughOpacity: Float
     var customStartupAnimationUri: String?
     var customStartupSoundUri: String?
+    var customStartupSoundDurationSeconds: Int
 
     suspend fun getSuCompatStatus(): String
     suspend fun getSuCompatPersistValue(): Long?

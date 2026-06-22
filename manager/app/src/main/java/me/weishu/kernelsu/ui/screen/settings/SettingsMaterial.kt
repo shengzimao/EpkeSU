@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material.icons.filled.Storefront
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.UploadFile
 import androidx.compose.material3.Icon
@@ -72,8 +73,10 @@ import me.weishu.kernelsu.ui.component.material.SnackBarHost
 import me.weishu.kernelsu.ui.component.uninstalldialog.UninstallDialog
 import me.weishu.kernelsu.ui.util.MAX_CUSTOM_WALLPAPER_OPACITY
 import me.weishu.kernelsu.ui.util.MAX_CUSTOM_WALLPAPER_PASSTHROUGH_OPACITY
+import me.weishu.kernelsu.ui.util.MAX_CUSTOM_STARTUP_SOUND_DURATION_SECONDS
 import me.weishu.kernelsu.ui.util.MIN_CUSTOM_WALLPAPER_OPACITY
 import me.weishu.kernelsu.ui.util.MIN_CUSTOM_WALLPAPER_PASSTHROUGH_OPACITY
+import me.weishu.kernelsu.ui.util.MIN_CUSTOM_STARTUP_SOUND_DURATION_SECONDS
 import kotlin.math.roundToInt
 
 /**
@@ -191,6 +194,28 @@ private fun SettingsMaterialContent(
                     headlineContent = { Text(stringResource(id = R.string.theme_store)) },
                     supportingContent = { Text(stringResource(id = R.string.theme_store_settings_summary)) },
                     leadingContent = { Icon(Icons.Filled.Storefront, stringResource(id = R.string.theme_store)) },
+                    trailingContent = {
+                        Icon(
+                            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            null
+                        )
+                    }
+                )
+            }
+            add {
+                val defaultName = stringResource(id = R.string.app_name)
+                val summary = if (uiState.customManagerName.isBlank()) {
+                    stringResource(id = R.string.settings_manager_name_default_summary, defaultName)
+                } else {
+                    stringResource(id = R.string.settings_manager_name_custom_summary, uiState.customManagerName)
+                }
+                SegmentedListItem(
+                    onClick = actions.onEditCustomManagerName,
+                    headlineContent = { Text(stringResource(id = R.string.settings_manager_name)) },
+                    supportingContent = { Text(summary) },
+                    leadingContent = {
+                        Icon(Icons.Filled.EditNote, stringResource(id = R.string.settings_manager_name))
+                    },
                     trailingContent = {
                         Icon(
                             Icons.AutoMirrored.Filled.KeyboardArrowRight,
@@ -386,6 +411,12 @@ private fun SettingsMaterialContent(
                 }
             }
             if (uiState.customStartupSoundUri != null) {
+                add {
+                    StartupSoundDurationMaterialItem(
+                        durationSeconds = uiState.customStartupSoundDurationSeconds,
+                        onDurationChange = actions.onSetStartupSoundDurationSeconds,
+                    )
+                }
                 add {
                     SegmentedListItem(
                         onClick = actions.onPreviewStartupSound,
@@ -660,6 +691,44 @@ private fun WallpaperOpacityMaterialItem(
         trailingContent = {
             Text(
                 text = "${(sliderValue * 100).roundToInt()}%",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        },
+    )
+}
+
+@Composable
+private fun StartupSoundDurationMaterialItem(
+    durationSeconds: Int,
+    onDurationChange: (Int) -> Unit,
+) {
+    var sliderValue by remember(durationSeconds) { mutableFloatStateOf(durationSeconds.toFloat()) }
+    val currentSeconds = sliderValue.roundToInt()
+
+    SegmentedListItem(
+        headlineContent = { Text(stringResource(id = R.string.settings_startup_sound_duration)) },
+        supportingContent = {
+            Column {
+                Text(stringResource(id = R.string.settings_startup_sound_duration_summary))
+                Slider(
+                    value = sliderValue,
+                    onValueChange = {
+                        sliderValue = it
+                        onDurationChange(it.roundToInt())
+                    },
+                    valueRange = MIN_CUSTOM_STARTUP_SOUND_DURATION_SECONDS.toFloat()..
+                        MAX_CUSTOM_STARTUP_SOUND_DURATION_SECONDS.toFloat(),
+                    steps = MAX_CUSTOM_STARTUP_SOUND_DURATION_SECONDS -
+                        MIN_CUSTOM_STARTUP_SOUND_DURATION_SECONDS - 1,
+                )
+            }
+        },
+        leadingContent = {
+            Icon(Icons.Filled.Timer, stringResource(id = R.string.settings_startup_sound_duration))
+        },
+        trailingContent = {
+            Text(
+                text = stringResource(id = R.string.settings_startup_sound_duration_value, currentSeconds),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         },

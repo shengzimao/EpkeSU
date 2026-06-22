@@ -21,7 +21,8 @@ enum class InterfaceStyle(val value: String, val label: String) {
     Miuix(UiMode.Miuix.value, "Miuix"),
     Material(UiMode.Material.value, "Material"),
     LiquidGlass("liquid_glass", "液态玻璃"),
-    Skrootpro("skrootpro", "skrootpro");
+    Skrootpro("skrootpro", "skrootpro"),
+    Alpha("alpha", "阿尔法");
 
     companion object {
         fun fromIndex(index: Int): InterfaceStyle = entries.getOrElse(index) { Miuix }

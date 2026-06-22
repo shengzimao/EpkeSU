@@ -21,7 +21,8 @@ import me.weishu.kernelsu.ui.UiMode
 import me.weishu.kernelsu.ui.component.StartupAnimationOverlay
 import me.weishu.kernelsu.ui.navigation3.Navigator
 import me.weishu.kernelsu.ui.navigation3.Route
-import me.weishu.kernelsu.ui.util.releasePersistableImageReadPermission
+import me.weishu.kernelsu.ui.util.CUSTOM_WALLPAPER_URI_KEY
+import me.weishu.kernelsu.ui.util.persistCustomImageReference
 import me.weishu.kernelsu.ui.util.releasePersistableStartupAnimationReadPermission
 import me.weishu.kernelsu.ui.util.releasePersistableAudioReadPermission
 import me.weishu.kernelsu.ui.util.StartupSoundPlayer
@@ -39,6 +40,7 @@ fun SettingPager(
     val context = LocalContext.current
     val viewModel = viewModel<SettingsViewModel>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val showManagerNameDialog = rememberSaveable { mutableStateOf(false) }
     val showWallpaperPreview = rememberSaveable { mutableStateOf(false) }
     val showWallpaperCropEditor = rememberSaveable { mutableStateOf(false) }
     val showStartupAnimationPreview = rememberSaveable { mutableStateOf(false) }
@@ -47,8 +49,9 @@ fun SettingPager(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         uri ?: return@rememberLauncherForActivityResult
-        takePersistableImageReadPermission(context, uri)
-        viewModel.setCustomWallpaperUri(uri.toString())
+        val uriString = persistCustomImageReference(context, uri, CUSTOM_WALLPAPER_URI_KEY)
+            ?: uri.toString().also { takePersistableImageReadPermission(context, uri) }
+        viewModel.setCustomWallpaperUri(uriString)
         showWallpaperCropEditor.value = true
     }
     val startupSoundLauncher = rememberLauncherForActivityResult(
@@ -88,11 +91,12 @@ fun SettingPager(
             viewModel.setUiMode(InterfaceStyle.fromIndex(index).value)
         },
         onOpenLauncherIcon = { navigator.push(Route.LauncherIcon) },
+        onEditCustomManagerName = { showManagerNameDialog.value = true },
+        onSetCustomManagerName = viewModel::setCustomManagerName,
         onPickWallpaper = { wallpaperLauncher.launch(arrayOf("image/*")) },
         onPreviewWallpaper = { showWallpaperPreview.value = true },
         onEditWallpaperCrop = { showWallpaperCropEditor.value = true },
         onClearWallpaper = {
-            releasePersistableImageReadPermission(context, uiState.customWallpaperUri)
             viewModel.clearCustomWallpaper()
             showWallpaperPreview.value = false
             showWallpaperCropEditor.value = false
@@ -136,6 +140,7 @@ fun SettingPager(
             releasePersistableAudioReadPermission(context, uiState.customStartupSoundUri)
             viewModel.clearCustomStartupSound()
         },
+        onSetStartupSoundDurationSeconds = viewModel::setCustomStartupSoundDurationSeconds,
         onOpenProfileTemplate = { navigator.push(Route.AppProfileTemplate) },
         onSetSuCompatMode = viewModel::setSuCompatMode,
         onSetKernelUmountEnabled = viewModel::setKernelUmountEnabled,
@@ -150,12 +155,14 @@ fun SettingPager(
     )
 
     Box {
-        if (LocalInterfaceStyle.current == InterfaceStyle.Skrootpro.value) {
-            SettingPagerSkrootpro(uiState, actions, bottomInnerPadding)
-        } else {
-            when (LocalUiMode.current) {
-                UiMode.Miuix -> SettingPagerMiuix(uiState, actions, bottomInnerPadding)
-                UiMode.Material -> SettingPagerMaterial(uiState, actions, bottomInnerPadding)
+        when (LocalInterfaceStyle.current) {
+            InterfaceStyle.Skrootpro.value -> SettingPagerSkrootpro(uiState, actions, bottomInnerPadding)
+            InterfaceStyle.Alpha.value -> SettingPagerAlpha(uiState, actions, bottomInnerPadding)
+            else -> {
+                when (LocalUiMode.current) {
+                    UiMode.Miuix -> SettingPagerMiuix(uiState, actions, bottomInnerPadding)
+                    UiMode.Material -> SettingPagerMaterial(uiState, actions, bottomInnerPadding)
+                }
             }
         }
 
@@ -175,6 +182,12 @@ fun SettingPager(
         }
     }
 
+    ManagerNameDialog(
+        show = showManagerNameDialog.value,
+        initialName = uiState.customManagerName,
+        onDismissRequest = { showManagerNameDialog.value = false },
+        onConfirm = actions.onSetCustomManagerName,
+    )
     SettingsWallpaperPreviewDialog(
         show = showWallpaperPreview.value,
         uriString = uiState.customWallpaperUri,

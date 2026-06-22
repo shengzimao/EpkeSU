@@ -299,6 +299,16 @@ class MainActivity : ComponentActivity() {
         StartupSoundPlayer.playConfigured(this)
     }
 
+    override fun onStop() {
+        StartupSoundPlayer.stop()
+        super.onStop()
+    }
+
+    override fun onDestroy() {
+        StartupSoundPlayer.stop()
+        super.onDestroy()
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)

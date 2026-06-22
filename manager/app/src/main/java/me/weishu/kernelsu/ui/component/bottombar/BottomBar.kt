@@ -21,6 +21,7 @@ import me.weishu.kernelsu.ui.LocalInterfaceStyle
 import me.weishu.kernelsu.ui.LocalMainPagerState
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.UiMode
+import me.weishu.kernelsu.ui.component.alpha.AlphaBottomBar
 import me.weishu.kernelsu.ui.component.skrootpro.SkrootproBottomBar
 import top.yukonga.miuix.kmp.blur.Backdrop
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
@@ -97,6 +98,16 @@ fun BottomBar(
     if (LocalInterfaceStyle.current == InterfaceStyle.Skrootpro.value) {
         val mainState = LocalMainPagerState.current
         SkrootproBottomBar(
+            selectedIndex = mainState.selectedPage,
+            onSelected = mainState::animateToPage,
+            modifier = modifier,
+        )
+        return
+    }
+
+    if (LocalInterfaceStyle.current == InterfaceStyle.Alpha.value) {
+        val mainState = LocalMainPagerState.current
+        AlphaBottomBar(
             selectedIndex = mainState.selectedPage,
             onSelected = mainState::animateToPage,
             modifier = modifier,

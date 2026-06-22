@@ -96,6 +96,7 @@ import me.weishu.kernelsu.ui.component.skrootpro.skrootproSp
 import me.weishu.kernelsu.ui.navigation3.LocalNavigator
 import me.weishu.kernelsu.ui.screen.settings.SettingsWallpaperCropDialog
 import me.weishu.kernelsu.ui.screen.settings.SettingsWallpaperPreviewDialog
+import me.weishu.kernelsu.ui.util.CUSTOM_WALLPAPER_URI_KEY
 import me.weishu.kernelsu.ui.util.CustomWallpaperCrop
 import me.weishu.kernelsu.ui.util.MAX_CUSTOM_WALLPAPER_OPACITY
 import me.weishu.kernelsu.ui.util.MIN_CUSTOM_WALLPAPER_OPACITY
@@ -107,6 +108,7 @@ import me.weishu.kernelsu.ui.util.ThemeStoreImageState
 import me.weishu.kernelsu.ui.util.ThemeStoreSummary
 import me.weishu.kernelsu.ui.util.exportThemeStorePackage
 import me.weishu.kernelsu.ui.util.importThemeStorePackage
+import me.weishu.kernelsu.ui.util.persistCustomImageReference
 import me.weishu.kernelsu.ui.util.readThemeStoreSummary
 import me.weishu.kernelsu.ui.util.setThemeStoreImageSlot
 import me.weishu.kernelsu.ui.util.setThemeStoreImageSlotCrop
@@ -185,8 +187,9 @@ fun ThemeStoreScreen() {
     ) { uri ->
         val target = cropTarget as? CropTarget.Card ?: return@rememberLauncherForActivityResult
         uri ?: return@rememberLauncherForActivityResult
-        takePersistableImageReadPermission(context, uri)
-        setThemeStoreImageSlot(context, target.slot, uri.toString())
+        val uriString = persistCustomImageReference(context, uri, target.slot.uriKey)
+            ?: uri.toString().also { takePersistableImageReadPermission(context, uri) }
+        setThemeStoreImageSlot(context, target.slot, uriString)
         refreshSummary()
         cropTarget = target
     }
@@ -194,8 +197,9 @@ fun ThemeStoreScreen() {
         contract = ActivityResultContracts.OpenDocument(),
     ) { uri ->
         uri ?: return@rememberLauncherForActivityResult
-        takePersistableImageReadPermission(context, uri)
-        setThemeStoreWallpaper(context, uri.toString())
+        val uriString = persistCustomImageReference(context, uri, CUSTOM_WALLPAPER_URI_KEY)
+            ?: uri.toString().also { takePersistableImageReadPermission(context, uri) }
+        setThemeStoreWallpaper(context, uriString)
         refreshSummary()
         cropTarget = CropTarget.Wallpaper
     }

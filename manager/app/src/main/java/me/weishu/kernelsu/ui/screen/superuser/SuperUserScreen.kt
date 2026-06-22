@@ -66,13 +66,24 @@ fun SuperUserPager(
         onOpenProfile = onOpenProfile,
     )
 
-    if (LocalInterfaceStyle.current == InterfaceStyle.Skrootpro.value) {
-        SuperUserPagerSkrootpro(
-            uiState = uiState,
-            actions = actions,
-            bottomInnerPadding = bottomInnerPadding,
-        )
-        return
+    when (LocalInterfaceStyle.current) {
+        InterfaceStyle.Skrootpro.value -> {
+            SuperUserPagerSkrootpro(
+                uiState = uiState,
+                actions = actions,
+                bottomInnerPadding = bottomInnerPadding,
+            )
+            return
+        }
+
+        InterfaceStyle.Alpha.value -> {
+            SuperUserPagerAlpha(
+                uiState = uiState,
+                actions = actions,
+                bottomInnerPadding = bottomInnerPadding,
+            )
+            return
+        }
     }
 
     when (LocalUiMode.current) {

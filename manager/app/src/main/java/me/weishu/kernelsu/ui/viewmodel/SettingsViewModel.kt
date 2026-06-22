@@ -55,6 +55,7 @@ class SettingsViewModel(
             val customThemePresets = repo.getCustomThemePresets()
             val enableWebDebugging = repo.enableWebDebugging
             val launcherIcon = repo.launcherIcon
+            val customManagerName = repo.customManagerName
             val customWallpaperUri = repo.customWallpaperUri
             val customWallpaperOpacity = repo.customWallpaperOpacity
             val customWallpaperCrop = repo.customWallpaperCrop
@@ -62,6 +63,7 @@ class SettingsViewModel(
             val customWallpaperPassthroughOpacity = repo.customWallpaperPassthroughOpacity
             val customStartupAnimationUri = repo.customStartupAnimationUri
             val customStartupSoundUri = repo.customStartupSoundUri
+            val customStartupSoundDurationSeconds = repo.customStartupSoundDurationSeconds
             val colorStyle = repo.colorStyle
             val colorSpec = repo.colorSpec
             val themePreset = resolveThemePreset(
@@ -121,6 +123,7 @@ class SettingsViewModel(
                     customThemePresets = customThemePresets,
                     enableWebDebugging = enableWebDebugging,
                     launcherIcon = launcherIcon,
+                    customManagerName = customManagerName,
                     customWallpaperUri = customWallpaperUri,
                     customWallpaperOpacity = customWallpaperOpacity,
                     customWallpaperCrop = customWallpaperCrop,
@@ -128,6 +131,7 @@ class SettingsViewModel(
                     customWallpaperPassthroughOpacity = customWallpaperPassthroughOpacity,
                     customStartupAnimationUri = customStartupAnimationUri,
                     customStartupSoundUri = customStartupSoundUri,
+                    customStartupSoundDurationSeconds = customStartupSoundDurationSeconds,
                     colorStyle = colorStyle,
                     colorSpec = colorSpec,
                     suCompatStatus = suCompatStatus,
@@ -167,6 +171,13 @@ class SettingsViewModel(
                 return
             }
 
+            InterfaceStyle.Alpha.value -> {
+                repo.uiMode = mode
+                applyThemePreset(ThemePreset.ALPHA)
+                _uiState.update { it.copy(uiMode = mode) }
+                return
+            }
+
             InterfaceStyle.LiquidGlass.value -> {
                 repo.uiMode = mode
                 applyThemePreset(ThemePreset.LIQUID_GLASS)
@@ -178,6 +189,7 @@ class SettingsViewModel(
         val oldMode = repo.uiMode
         val currentThemeMode = repo.themeMode
         val isLeavingSpecialStyle = oldMode == InterfaceStyle.Skrootpro.value ||
+            oldMode == InterfaceStyle.Alpha.value ||
             oldMode == InterfaceStyle.LiquidGlass.value
 
         if (isLeavingSpecialStyle && (mode == InterfaceStyle.Miuix.value || mode == InterfaceStyle.Material.value)) {
@@ -230,6 +242,11 @@ class SettingsViewModel(
         _uiState.update { it.copy(launcherIcon = repo.launcherIcon) }
     }
 
+    fun setCustomManagerName(name: String) {
+        repo.customManagerName = name
+        _uiState.update { it.copy(customManagerName = repo.customManagerName) }
+    }
+
     fun setCustomWallpaperUri(uri: String?) {
         repo.customWallpaperUri = uri
         _uiState.update {
@@ -271,6 +288,11 @@ class SettingsViewModel(
 
     fun clearCustomStartupSound() {
         setCustomStartupSoundUri(null)
+    }
+
+    fun setCustomStartupSoundDurationSeconds(seconds: Int) {
+        repo.customStartupSoundDurationSeconds = seconds
+        _uiState.update { it.copy(customStartupSoundDurationSeconds = repo.customStartupSoundDurationSeconds) }
     }
 
     fun setCustomStartupAnimationUri(uri: String?) {

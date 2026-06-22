@@ -118,7 +118,8 @@ fun LauncherIconScreen() {
                     Toast.LENGTH_LONG
                 ).show()
             } else {
-                Shortcut.createManagerShortcut(context, bitmap)
+                val managerName = uiState.customManagerName.ifBlank { context.getString(R.string.app_name) }
+                Shortcut.createManagerShortcut(context, bitmap, managerName)
             }
             showCustomIconCrop = false
             customIconUri = null

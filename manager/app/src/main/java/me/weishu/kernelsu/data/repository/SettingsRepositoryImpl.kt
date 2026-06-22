@@ -28,16 +28,20 @@ import me.weishu.kernelsu.ui.util.CUSTOM_WALLPAPER_PASSTHROUGH_ENABLED_KEY
 import me.weishu.kernelsu.ui.util.CUSTOM_WALLPAPER_PASSTHROUGH_OPACITY_KEY
 import me.weishu.kernelsu.ui.util.CUSTOM_WALLPAPER_URI_KEY
 import me.weishu.kernelsu.ui.util.CUSTOM_STARTUP_ANIMATION_URI_KEY
+import me.weishu.kernelsu.ui.util.CUSTOM_STARTUP_SOUND_DURATION_SECONDS_KEY
 import me.weishu.kernelsu.ui.util.CUSTOM_STARTUP_SOUND_URI_KEY
 import me.weishu.kernelsu.ui.util.CustomWallpaperCrop
 import me.weishu.kernelsu.ui.util.DEFAULT_CUSTOM_WALLPAPER_CROP
 import me.weishu.kernelsu.ui.util.DEFAULT_CUSTOM_WALLPAPER_OPACITY
 import me.weishu.kernelsu.ui.util.DEFAULT_CUSTOM_WALLPAPER_PASSTHROUGH_OPACITY
+import me.weishu.kernelsu.ui.util.DEFAULT_CUSTOM_STARTUP_SOUND_DURATION_SECONDS
 import me.weishu.kernelsu.ui.util.LauncherIconOption
 import me.weishu.kernelsu.ui.util.applyLauncherIcon
 import me.weishu.kernelsu.ui.util.execKsud
 import me.weishu.kernelsu.ui.util.getFeaturePersistValue
 import me.weishu.kernelsu.ui.util.getFeatureStatus
+import me.weishu.kernelsu.ui.util.releaseCustomImageReference
+import me.weishu.kernelsu.ui.util.sanitizeCustomStartupSoundDurationSeconds
 import me.weishu.kernelsu.ui.util.sanitizeCustomWallpaperCrop
 import me.weishu.kernelsu.ui.util.sanitizeCustomWallpaperOpacity
 import me.weishu.kernelsu.ui.util.sanitizeCustomWallpaperPassthroughOpacity
@@ -217,21 +221,40 @@ class SettingsRepositoryImpl : SettingsRepository {
             }
         }
 
+    override var customManagerName: String
+        get() = sanitizeCustomManagerName(prefs.getString(CUSTOM_MANAGER_NAME_KEY, null))
+        set(value) {
+            val name = sanitizeCustomManagerName(value)
+            prefs.edit {
+                if (name.isBlank()) {
+                    remove(CUSTOM_MANAGER_NAME_KEY)
+                } else {
+                    putString(CUSTOM_MANAGER_NAME_KEY, name)
+                }
+            }
+        }
+
     override var customWallpaperUri: String?
         get() = prefs.getString(CUSTOM_WALLPAPER_URI_KEY, null)
-        set(value) = prefs.edit {
-            if (value.isNullOrBlank()) {
-                remove(CUSTOM_WALLPAPER_URI_KEY)
-                remove(CUSTOM_WALLPAPER_CROP_LEFT_KEY)
-                remove(CUSTOM_WALLPAPER_CROP_TOP_KEY)
-                remove(CUSTOM_WALLPAPER_CROP_RIGHT_KEY)
-                remove(CUSTOM_WALLPAPER_CROP_BOTTOM_KEY)
-            } else {
-                putString(CUSTOM_WALLPAPER_URI_KEY, value)
-                putFloat(CUSTOM_WALLPAPER_CROP_LEFT_KEY, DEFAULT_CUSTOM_WALLPAPER_CROP.left)
-                putFloat(CUSTOM_WALLPAPER_CROP_TOP_KEY, DEFAULT_CUSTOM_WALLPAPER_CROP.top)
-                putFloat(CUSTOM_WALLPAPER_CROP_RIGHT_KEY, DEFAULT_CUSTOM_WALLPAPER_CROP.right)
-                putFloat(CUSTOM_WALLPAPER_CROP_BOTTOM_KEY, DEFAULT_CUSTOM_WALLPAPER_CROP.bottom)
+        set(value) {
+            val previous = customWallpaperUri
+            prefs.edit(commit = true) {
+                if (value.isNullOrBlank()) {
+                    remove(CUSTOM_WALLPAPER_URI_KEY)
+                    remove(CUSTOM_WALLPAPER_CROP_LEFT_KEY)
+                    remove(CUSTOM_WALLPAPER_CROP_TOP_KEY)
+                    remove(CUSTOM_WALLPAPER_CROP_RIGHT_KEY)
+                    remove(CUSTOM_WALLPAPER_CROP_BOTTOM_KEY)
+                } else {
+                    putString(CUSTOM_WALLPAPER_URI_KEY, value)
+                    putFloat(CUSTOM_WALLPAPER_CROP_LEFT_KEY, DEFAULT_CUSTOM_WALLPAPER_CROP.left)
+                    putFloat(CUSTOM_WALLPAPER_CROP_TOP_KEY, DEFAULT_CUSTOM_WALLPAPER_CROP.top)
+                    putFloat(CUSTOM_WALLPAPER_CROP_RIGHT_KEY, DEFAULT_CUSTOM_WALLPAPER_CROP.right)
+                    putFloat(CUSTOM_WALLPAPER_CROP_BOTTOM_KEY, DEFAULT_CUSTOM_WALLPAPER_CROP.bottom)
+                }
+            }
+            if (previous != value) {
+                releaseCustomImageReference(ksuApp, previous)
             }
         }
 
@@ -252,7 +275,7 @@ class SettingsRepositoryImpl : SettingsRepository {
                 bottom = prefs.getFloat(CUSTOM_WALLPAPER_CROP_BOTTOM_KEY, DEFAULT_CUSTOM_WALLPAPER_CROP.bottom),
             )
         )
-        set(value) = prefs.edit {
+        set(value) = prefs.edit(commit = true) {
             val crop = sanitizeCustomWallpaperCrop(value)
             putFloat(CUSTOM_WALLPAPER_CROP_LEFT_KEY, crop.left)
             putFloat(CUSTOM_WALLPAPER_CROP_TOP_KEY, crop.top)
@@ -283,6 +306,20 @@ class SettingsRepositoryImpl : SettingsRepository {
             } else {
                 putString(CUSTOM_STARTUP_SOUND_URI_KEY, value)
             }
+        }
+
+    override var customStartupSoundDurationSeconds: Int
+        get() = sanitizeCustomStartupSoundDurationSeconds(
+            prefs.getInt(
+                CUSTOM_STARTUP_SOUND_DURATION_SECONDS_KEY,
+                DEFAULT_CUSTOM_STARTUP_SOUND_DURATION_SECONDS,
+            )
+        )
+        set(value) = prefs.edit {
+            putInt(
+                CUSTOM_STARTUP_SOUND_DURATION_SECONDS_KEY,
+                sanitizeCustomStartupSoundDurationSeconds(value),
+            )
         }
 
     override var customStartupAnimationUri: String?
@@ -593,7 +630,13 @@ class SettingsRepositoryImpl : SettingsRepository {
         return if (value.isFinite()) value.coerceIn(min, max) else fallback
     }
 
+    private fun sanitizeCustomManagerName(value: String?): String {
+        return value.orEmpty().trim().take(MAX_CUSTOM_MANAGER_NAME_LENGTH)
+    }
+
     private companion object {
+        const val CUSTOM_MANAGER_NAME_KEY = "custom_manager_name"
+        const val MAX_CUSTOM_MANAGER_NAME_LENGTH = 40
         const val CUSTOM_THEME_PRESET_IDS_KEY = "custom_theme_preset_ids"
         val CUSTOM_THEME_PRESET_FIELDS = listOf(
             "name",

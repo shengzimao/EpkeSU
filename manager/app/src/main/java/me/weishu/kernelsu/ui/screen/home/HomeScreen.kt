@@ -94,13 +94,24 @@ fun HomePager(
         },
     )
 
-    if (LocalInterfaceStyle.current == InterfaceStyle.Skrootpro.value) {
-        HomePagerSkrootpro(
-            state = uiState,
-            actions = actions,
-            bottomInnerPadding = bottomInnerPadding,
-        )
-        return
+    when (LocalInterfaceStyle.current) {
+        InterfaceStyle.Skrootpro.value -> {
+            HomePagerSkrootpro(
+                state = uiState,
+                actions = actions,
+                bottomInnerPadding = bottomInnerPadding,
+            )
+            return
+        }
+
+        InterfaceStyle.Alpha.value -> {
+            HomePagerAlpha(
+                state = uiState,
+                actions = actions,
+                bottomInnerPadding = bottomInnerPadding,
+            )
+            return
+        }
     }
 
     when (LocalUiMode.current) {

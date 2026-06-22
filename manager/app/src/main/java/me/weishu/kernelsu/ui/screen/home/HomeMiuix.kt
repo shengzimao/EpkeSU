@@ -103,6 +103,8 @@ import me.weishu.kernelsu.ui.util.BlurredBar
 import me.weishu.kernelsu.ui.util.CustomWallpaperCrop
 import me.weishu.kernelsu.ui.util.DEFAULT_CUSTOM_WALLPAPER_CROP
 import me.weishu.kernelsu.ui.util.loadCustomImageBitmap
+import me.weishu.kernelsu.ui.util.persistCustomImageReference
+import me.weishu.kernelsu.ui.util.releaseCustomImageReference
 import me.weishu.kernelsu.ui.util.rememberBlurBackdrop
 import me.weishu.kernelsu.ui.util.sanitizeCustomWallpaperCrop
 import me.weishu.kernelsu.ui.util.takePersistableImageReadPermission
@@ -465,12 +467,16 @@ private fun rememberLkmCardWallpaperState(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         uri ?: return@rememberLauncherForActivityResult
-        val nextUriString = uri.toString()
+        val nextUriString = persistCustomImageReference(context, uri, LKM_CARD_WALLPAPER_URI_KEY)
+            ?: uri.toString().also { takePersistableImageReadPermission(context, uri) }
+        val previousUriString = uriString
         val defaultCrop = DEFAULT_CUSTOM_WALLPAPER_CROP
-        takePersistableImageReadPermission(context, uri)
+        if (previousUriString != nextUriString) {
+            releaseCustomImageReference(context, previousUriString)
+        }
         uriString = nextUriString
         crop = defaultCrop
-        prefs.edit {
+        prefs.edit(commit = true) {
             putString(LKM_CARD_WALLPAPER_URI_KEY, nextUriString)
             putLkmCardWallpaperCrop(defaultCrop)
         }
@@ -487,14 +493,15 @@ private fun rememberLkmCardWallpaperState(
             onCropChange = { nextCrop ->
                 val safeCrop = sanitizeCustomWallpaperCrop(nextCrop)
                 crop = safeCrop
-                prefs.edit {
+                prefs.edit(commit = true) {
                     putLkmCardWallpaperCrop(safeCrop)
                 }
             },
             onClearWallpaper = {
+                releaseCustomImageReference(context, uriString)
                 uriString = null
                 crop = DEFAULT_CUSTOM_WALLPAPER_CROP
-                prefs.edit {
+                prefs.edit(commit = true) {
                     remove(LKM_CARD_WALLPAPER_URI_KEY)
                     removeLkmCardWallpaperCrop()
                 }

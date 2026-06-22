@@ -37,12 +37,13 @@ fun getGitDescribe(): String {
 }
 
 fun getVersionCode(): Int {
+    readFallbackVersionCode()?.let { return it }
     val commitCount = getGitCommitCount()
     return 30000 + commitCount
 }
 
 fun getVersionName(): String {
-    return getGitDescribe()
+    return readFallbackVersionName() ?: getGitDescribe()
 }
 
 fun readFallbackVersionCode(): Int? {

@@ -337,6 +337,11 @@
     <string name="settings_section_advanced">高级</string>
     <string name="settings_section_maintenance">维护</string>
     <string name="settings_app_icon">应用图标</string>
+    <string name="settings_manager_name">自定义管理器名称</string>
+    <string name="settings_manager_name_default_summary">当前使用默认名称：%1$s</string>
+    <string name="settings_manager_name_custom_summary">当前快捷入口名称：%1$s</string>
+    <string name="settings_manager_name_input_label">管理器名称</string>
+    <string name="settings_manager_name_dialog_summary">留空则使用默认应用名称。</string>
     <string name="settings_app_icon_summary">选择桌面上显示的启动图标。</string>
     <string name="settings_app_icon_default">默认</string>
     <string name="settings_app_icon_module">模块</string>
@@ -381,6 +386,9 @@
     <string name="settings_startup_sound">启动音效</string>
     <string name="settings_startup_sound_summary">选择一个音频文件，在应用启动时播放。</string>
     <string name="settings_startup_sound_selected_summary">已选择启动音效，点击可重新选择。</string>
+    <string name="settings_startup_sound_duration">启动音效时长</string>
+    <string name="settings_startup_sound_duration_summary">到达设定时间后自动停止播放。</string>
+    <string name="settings_startup_sound_duration_value">%1$d 秒</string>
     <string name="settings_startup_sound_preview">试听启动音效</string>
     <string name="settings_startup_sound_clear">清除启动音效</string>
     <string name="settings_startup_sound_play_failed">无法播放这个启动音效。</string>
@@ -400,6 +408,13 @@
     <string name="theme_preset_liquid_glass_summary">浅色全局液态玻璃，覆盖顶栏、卡片、列表和控件。</string>
     <string name="theme_preset_skrootpro">skrootpro</string>
     <string name="theme_preset_skrootpro_summary">SKRoot(Pro) 风格的紫色控件、浅色界面和悬浮底栏。</string>
+    <string name="theme_preset_alpha">阿尔法</string>
+    <string name="theme_preset_alpha_summary">Magisk Alpha 风格的浅灰卡片、粗体文字、蓝色控件和固定底栏。</string>
+    <string name="alpha_current">当前</string>
+    <string name="alpha_yes">是</string>
+    <string name="alpha_no">否</string>
+    <string name="alpha_follow_us">关注我们</string>
+    <string name="alpha_startup_media">启动媒体</string>
     <string name="skrootpro_title">SKRoot(Pro)</string>
     <string name="skrootpro_intro_title">Linux内核级完美隐藏Root方案</string>
     <string name="skrootpro_intro_body">无视全网检测手段，实现 SELinux 零触碰、无挂载。免源码直接 Patch 原厂内核，完美保留官方内核所有特性。模块特性：自研内核Hook框架，0性能损耗、无侧信道痕迹。内核偏移动动态寻找，真正跨内核运行。</string>

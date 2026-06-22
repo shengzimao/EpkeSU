@@ -19,7 +19,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Apps
+import androidx.compose.material.icons.rounded.EditNote
 import androidx.compose.material.icons.rounded.PlayCircle
+import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Slider
@@ -48,8 +50,10 @@ import me.weishu.kernelsu.ui.component.skrootpro.SkrootproSectionTitle
 import me.weishu.kernelsu.ui.component.skrootpro.skrootproSp
 import me.weishu.kernelsu.ui.util.MAX_CUSTOM_WALLPAPER_OPACITY
 import me.weishu.kernelsu.ui.util.MAX_CUSTOM_WALLPAPER_PASSTHROUGH_OPACITY
+import me.weishu.kernelsu.ui.util.MAX_CUSTOM_STARTUP_SOUND_DURATION_SECONDS
 import me.weishu.kernelsu.ui.util.MIN_CUSTOM_WALLPAPER_OPACITY
 import me.weishu.kernelsu.ui.util.MIN_CUSTOM_WALLPAPER_PASSTHROUGH_OPACITY
+import me.weishu.kernelsu.ui.util.MIN_CUSTOM_STARTUP_SOUND_DURATION_SECONDS
 import kotlin.math.roundToInt
 
 @Composable
@@ -83,6 +87,19 @@ fun SettingPagerSkrootpro(
                 title = stringResource(R.string.theme_store),
                 summary = stringResource(R.string.theme_store_settings_summary),
                 onClick = actions.onOpenThemeStore,
+            )
+            SkrootproActionRow(
+                title = stringResource(R.string.settings_manager_name),
+                summary = if (uiState.customManagerName.isBlank()) {
+                    stringResource(
+                        R.string.settings_manager_name_default_summary,
+                        stringResource(R.string.app_name)
+                    )
+                } else {
+                    stringResource(R.string.settings_manager_name_custom_summary, uiState.customManagerName)
+                },
+                leadingIcon = Icons.Rounded.EditNote,
+                onClick = actions.onEditCustomManagerName,
             )
             SkrootproActionRow(
                 title = stringResource(R.string.settings_app_icon),
@@ -174,6 +191,11 @@ fun SettingPagerSkrootpro(
                 )
             }
             if (uiState.customStartupSoundUri != null) {
+                SkrootproDurationSliderRow(
+                    title = stringResource(R.string.settings_startup_sound_duration),
+                    value = uiState.customStartupSoundDurationSeconds,
+                    onValueChange = actions.onSetStartupSoundDurationSeconds,
+                )
                 SkrootproActionRow(
                     title = stringResource(R.string.settings_startup_sound_preview),
                     summary = "",
@@ -296,6 +318,64 @@ private fun SkrootproStylePicker(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun SkrootproDurationSliderRow(
+    title: String,
+    value: Int,
+    onValueChange: (Int) -> Unit,
+) {
+    var sliderValue by remember(value) { mutableFloatStateOf(value.toFloat()) }
+    val currentSeconds = sliderValue.roundToInt()
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(SkrootproColors.BarSurface)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            androidx.compose.material3.Icon(
+                imageVector = Icons.Rounded.Timer,
+                contentDescription = null,
+                tint = SkrootproColors.Text,
+            )
+            Text(
+                text = title,
+                color = SkrootproColors.Text,
+                fontSize = skrootproSp(16f, maxScale = 1.05f),
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = stringResource(R.string.settings_startup_sound_duration_value, currentSeconds),
+                color = SkrootproColors.Muted,
+                fontSize = skrootproSp(13f, maxScale = 1.05f),
+                fontWeight = FontWeight.Medium,
+            )
+        }
+        Slider(
+            value = sliderValue,
+            onValueChange = {
+                sliderValue = it
+                onValueChange(it.roundToInt())
+            },
+            valueRange = MIN_CUSTOM_STARTUP_SOUND_DURATION_SECONDS.toFloat()..
+                MAX_CUSTOM_STARTUP_SOUND_DURATION_SECONDS.toFloat(),
+            steps = MAX_CUSTOM_STARTUP_SOUND_DURATION_SECONDS -
+                MIN_CUSTOM_STARTUP_SOUND_DURATION_SECONDS - 1,
+        )
     }
 }
 

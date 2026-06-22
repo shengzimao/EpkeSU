@@ -11,6 +11,17 @@ import android.os.Looper
 import android.util.Log
 
 const val CUSTOM_STARTUP_SOUND_URI_KEY = "custom_startup_sound_uri"
+const val CUSTOM_STARTUP_SOUND_DURATION_SECONDS_KEY = "custom_startup_sound_duration_seconds"
+const val DEFAULT_CUSTOM_STARTUP_SOUND_DURATION_SECONDS = 5
+const val MIN_CUSTOM_STARTUP_SOUND_DURATION_SECONDS = 1
+const val MAX_CUSTOM_STARTUP_SOUND_DURATION_SECONDS = 30
+
+fun sanitizeCustomStartupSoundDurationSeconds(value: Int): Int {
+    return value.coerceIn(
+        MIN_CUSTOM_STARTUP_SOUND_DURATION_SECONDS,
+        MAX_CUSTOM_STARTUP_SOUND_DURATION_SECONDS,
+    )
+}
 
 fun takePersistableAudioReadPermission(context: Context, uri: Uri) {
     runCatching {
@@ -37,6 +48,7 @@ object StartupSoundPlayer {
     private var source: AssetFileDescriptor? = null
     private var suppressNextAutoPlay = false
     private val mainHandler = Handler(Looper.getMainLooper())
+    private var stopRunnable: Runnable? = null
 
     fun playConfigured(context: Context) {
         if (suppressNextAutoPlay) {
@@ -44,9 +56,15 @@ object StartupSoundPlayer {
             return
         }
         val appContext = context.applicationContext
-        val uriString = appContext.getSharedPreferences("settings", Context.MODE_PRIVATE)
-            .getString(CUSTOM_STARTUP_SOUND_URI_KEY, null)
-        play(appContext, uriString)
+        val prefs = appContext.getSharedPreferences("settings", Context.MODE_PRIVATE)
+        val uriString = prefs.getString(CUSTOM_STARTUP_SOUND_URI_KEY, null)
+        val durationSeconds = sanitizeCustomStartupSoundDurationSeconds(
+            prefs.getInt(
+                CUSTOM_STARTUP_SOUND_DURATION_SECONDS_KEY,
+                DEFAULT_CUSTOM_STARTUP_SOUND_DURATION_SECONDS,
+            )
+        )
+        play(appContext, uriString, durationSeconds)
     }
 
     fun suppressNextAutoPlay() {
@@ -62,8 +80,23 @@ object StartupSoundPlayer {
         uriString: String?,
         onError: ((Throwable?) -> Unit)? = null,
     ) {
+        play(
+            context = context,
+            uriString = uriString,
+            durationSeconds = readConfiguredDurationSeconds(context),
+            onError = onError,
+        )
+    }
+
+    fun play(
+        context: Context,
+        uriString: String?,
+        durationSeconds: Int,
+        onError: ((Throwable?) -> Unit)? = null,
+    ) {
         if (uriString.isNullOrBlank()) return
         stop()
+        val safeDurationSeconds = sanitizeCustomStartupSoundDurationSeconds(durationSeconds)
 
         runCatching {
             val appContext = context.applicationContext
@@ -91,6 +124,7 @@ object StartupSoundPlayer {
                 setOnPreparedListener {
                     runCatching {
                         it.start()
+                        scheduleStop(it, safeDurationSeconds)
                     }.onFailure { throwable ->
                         Log.e("StartupSound", "failed to start startup sound", throwable)
                         cleanup(it)
@@ -116,6 +150,7 @@ object StartupSoundPlayer {
     }
 
     fun stop() {
+        clearScheduledStop()
         player?.let { mediaPlayer ->
             runCatching {
                 if (mediaPlayer.isPlaying) {
@@ -132,10 +167,38 @@ object StartupSoundPlayer {
     private fun cleanup(mediaPlayer: MediaPlayer) {
         if (player === mediaPlayer) {
             player = null
+            clearScheduledStop()
+            runCatching { source?.close() }
+            source = null
         }
         mediaPlayer.release()
-        runCatching { source?.close() }
-        source = null
+    }
+
+    private fun scheduleStop(mediaPlayer: MediaPlayer, durationSeconds: Int) {
+        clearScheduledStop()
+        val runnable = Runnable {
+            if (player === mediaPlayer) {
+                stop()
+            }
+        }
+        stopRunnable = runnable
+        mainHandler.postDelayed(runnable, durationSeconds * 1000L)
+    }
+
+    private fun clearScheduledStop() {
+        stopRunnable?.let { mainHandler.removeCallbacks(it) }
+        stopRunnable = null
+    }
+
+    private fun readConfiguredDurationSeconds(context: Context): Int {
+        val appContext = context.applicationContext
+        val prefs = appContext.getSharedPreferences("settings", Context.MODE_PRIVATE)
+        return sanitizeCustomStartupSoundDurationSeconds(
+            prefs.getInt(
+                CUSTOM_STARTUP_SOUND_DURATION_SECONDS_KEY,
+                DEFAULT_CUSTOM_STARTUP_SOUND_DURATION_SECONDS,
+            )
+        )
     }
 
     private fun notifyError(onError: ((Throwable?) -> Unit)?, throwable: Throwable?) {

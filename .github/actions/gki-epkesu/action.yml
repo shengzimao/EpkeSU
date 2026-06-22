@@ -1,0 +1,67 @@
+name: Setup EpkeSU
+description: Link this repository's EpkeSU kernel source into the downloaded GKI tree
+
+runs:
+  using: composite
+  steps:
+    - name: Link EpkeSU into GKI drivers
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        EPKESU_ROOT="${{ github.workspace }}"
+        GKI_KERNEL="${{ github.workspace }}/.gki/kernel"
+
+        if [ ! -d "$EPKESU_ROOT/kernel" ]; then
+          echo "EpkeSU kernel source not found at $EPKESU_ROOT/kernel" >&2
+          exit 1
+        fi
+
+        if [ -d "$GKI_KERNEL/common/drivers" ]; then
+          DRIVER_DIR="$GKI_KERNEL/common/drivers"
+        elif [ -d "$GKI_KERNEL/drivers" ]; then
+          DRIVER_DIR="$GKI_KERNEL/drivers"
+        else
+          echo "GKI drivers directory not found under $GKI_KERNEL" >&2
+          exit 1
+        fi
+
+        DRIVER_MAKEFILE="$DRIVER_DIR/Makefile"
+        DRIVER_KCONFIG="$DRIVER_DIR/Kconfig"
+
+        ln -sfn "$(realpath --relative-to="$DRIVER_DIR" "$EPKESU_ROOT/kernel")" "$DRIVER_DIR/kernelsu"
+        grep -q 'obj-$(CONFIG_KSU) += kernelsu/' "$DRIVER_MAKEFILE" || \
+          printf '\nobj-$(CONFIG_KSU) += kernelsu/\n' >> "$DRIVER_MAKEFILE"
+        grep -q 'source "drivers/kernelsu/Kconfig"' "$DRIVER_KCONFIG" || \
+          sed -i '/endmenu/i\source "drivers/kernelsu/Kconfig"' "$DRIVER_KCONFIG"
+
+    - name: Apply EpkeSU GKI compatibility fixes
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        SELINUX_HIDE="${{ github.workspace }}/kernel/feature/selinux_hide.c"
+        if [ -f "$SELINUX_HIDE" ]; then
+          sed -i 's/^static int security_context_to_sid_with_policy/int security_context_to_sid_with_policy/' "$SELINUX_HIDE"
+          sed -i 's/^static int security_sid_to_context_with_policy/int security_sid_to_context_with_policy/' "$SELINUX_HIDE"
+          sed -i 's/^static void security_compute_av_user_with_policy/void security_compute_av_user_with_policy/' "$SELINUX_HIDE"
+        fi
+
+    - name: Enable EpkeSU kernel config
+      uses: ./.github/actions/gki-set-kernel-config
+      with:
+        config_list: |
+          CONFIG_KSU=y
+
+    - name: Export EpkeSU version info
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        EPKESU_COMMIT="$(git -C "${{ github.workspace }}" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+        EPKESU_VERSION="$(sed -n 's/^versionCode=//p' "${{ github.workspace }}/version.properties" 2>/dev/null | head -n 1)"
+        EPKESU_VERSION_NAME="$(sed -n 's/^versionName=//p' "${{ github.workspace }}/version.properties" 2>/dev/null | head -n 1)"
+
+        echo "EPKESU_COMMIT=$EPKESU_COMMIT" >> "$GITHUB_ENV"
+        echo "EPKESU_VERSION=$EPKESU_VERSION" >> "$GITHUB_ENV"
+        echo "EPKESU_VERSION_NAME=$EPKESU_VERSION_NAME" >> "$GITHUB_ENV"

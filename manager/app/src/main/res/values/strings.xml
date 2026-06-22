@@ -273,6 +273,11 @@
     <string name="settings_key_color_default">Default</string>
     <string name="settings_ui_mode">UI Style</string>
     <string name="settings_ui_mode_summary">Choose the interface style.</string>
+    <string name="settings_manager_name">Custom manager name</string>
+    <string name="settings_manager_name_default_summary">Using default name: %1$s</string>
+    <string name="settings_manager_name_custom_summary">Custom shortcut name: %1$s</string>
+    <string name="settings_manager_name_input_label">Manager name</string>
+    <string name="settings_manager_name_dialog_summary">Leave empty to use the default app name.</string>
     <string name="settings_app_icon">App icon</string>
     <string name="settings_app_icon_summary">Choose the launcher icon shown on the home screen.</string>
     <string name="settings_app_icon_default">Default</string>
@@ -339,6 +344,9 @@
     <string name="settings_startup_sound">Startup sound</string>
     <string name="settings_startup_sound_summary">Choose an audio file to play when the app starts.</string>
     <string name="settings_startup_sound_selected_summary">Startup sound selected. Tap to choose another audio file.</string>
+    <string name="settings_startup_sound_duration">Startup sound duration</string>
+    <string name="settings_startup_sound_duration_summary">Stop playback automatically after the selected time.</string>
+    <string name="settings_startup_sound_duration_value">%1$d s</string>
     <string name="settings_startup_sound_preview">Preview startup sound</string>
     <string name="settings_startup_sound_clear">Clear startup sound</string>
     <string name="settings_startup_sound_play_failed">Unable to play this startup sound.</string>
@@ -383,6 +391,13 @@
     <string name="theme_preset_liquid_glass_summary">浅色全局液态玻璃，覆盖顶栏、卡片、列表和控件。</string>
     <string name="theme_preset_skrootpro">skrootpro</string>
     <string name="theme_preset_skrootpro_summary">SKRoot(Pro)-style purple controls, light surfaces, and a floating bottom bar.</string>
+    <string name="theme_preset_alpha">Alpha</string>
+    <string name="theme_preset_alpha_summary">Magisk Alpha-inspired light gray cards, bold text, blue controls, and a fixed bottom bar.</string>
+    <string name="alpha_current">Current</string>
+    <string name="alpha_yes">Yes</string>
+    <string name="alpha_no">No</string>
+    <string name="alpha_follow_us">Follow us</string>
+    <string name="alpha_startup_media">Startup media</string>
     <string name="skrootpro_title">SKRoot(Pro)</string>
     <string name="skrootpro_intro_title">Linux kernel-level hidden Root solution</string>
     <string name="skrootpro_intro_body">Ignore network-wide detection methods, achieve SELinux zero-touch and no mount. Patch the stock kernel directly without source code and preserve official kernel features. Module features: self-developed kernel Hook framework, zero performance loss, no side-channel traces. Dynamic kernel offset search for true cross-kernel operation.</string>

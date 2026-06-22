@@ -37,6 +37,7 @@ import androidx.compose.material.icons.rounded.Policy
 import androidx.compose.material.icons.rounded.RemoveCircle
 import androidx.compose.material.icons.rounded.RemoveModerator
 import androidx.compose.material.icons.rounded.Storefront
+import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.UploadFile
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.Wallpaper
@@ -69,8 +70,10 @@ import me.weishu.kernelsu.ui.theme.skrootproTopBarColors
 import me.weishu.kernelsu.ui.util.BlurredBar
 import me.weishu.kernelsu.ui.util.MAX_CUSTOM_WALLPAPER_OPACITY
 import me.weishu.kernelsu.ui.util.MAX_CUSTOM_WALLPAPER_PASSTHROUGH_OPACITY
+import me.weishu.kernelsu.ui.util.MAX_CUSTOM_STARTUP_SOUND_DURATION_SECONDS
 import me.weishu.kernelsu.ui.util.MIN_CUSTOM_WALLPAPER_OPACITY
 import me.weishu.kernelsu.ui.util.MIN_CUSTOM_WALLPAPER_PASSTHROUGH_OPACITY
+import me.weishu.kernelsu.ui.util.MIN_CUSTOM_STARTUP_SOUND_DURATION_SECONDS
 import me.weishu.kernelsu.ui.util.rememberBlurBackdrop
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.Icon
@@ -110,6 +113,7 @@ fun SettingPagerMiuix(
     val showSendLogDialog = rememberSaveable { mutableStateOf(false) }
     val showWallpaperOpacitySlider = rememberSaveable { mutableStateOf(false) }
     val showWallpaperPassthroughOpacitySlider = rememberSaveable { mutableStateOf(false) }
+    val showStartupSoundDurationSlider = rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -215,6 +219,29 @@ fun SettingPagerMiuix(
                                 )
                             },
                             onClick = actions.onOpenThemeStore
+                        )
+                        ArrowPreference(
+                            title = stringResource(id = R.string.settings_manager_name),
+                            summary = if (uiState.customManagerName.isBlank()) {
+                                stringResource(
+                                    id = R.string.settings_manager_name_default_summary,
+                                    stringResource(id = R.string.app_name)
+                                )
+                            } else {
+                                stringResource(
+                                    id = R.string.settings_manager_name_custom_summary,
+                                    uiState.customManagerName
+                                )
+                            },
+                            startAction = {
+                                Icon(
+                                    Icons.Rounded.EditNote,
+                                    modifier = Modifier.padding(end = 6.dp),
+                                    contentDescription = stringResource(id = R.string.settings_manager_name),
+                                    tint = colorScheme.onBackground
+                                )
+                            },
+                            onClick = actions.onEditCustomManagerName
                         )
                         ArrowPreference(
                             title = stringResource(id = R.string.settings_app_icon),
@@ -447,6 +474,49 @@ fun SettingPagerMiuix(
                             )
                         }
                         if (uiState.customStartupSoundUri != null) {
+                            var startupSoundDuration by remember(uiState.customStartupSoundDurationSeconds) {
+                                mutableFloatStateOf(uiState.customStartupSoundDurationSeconds.toFloat())
+                            }
+                            ArrowPreference(
+                                title = stringResource(id = R.string.settings_startup_sound_duration),
+                                summary = stringResource(id = R.string.settings_startup_sound_duration_summary),
+                                startAction = {
+                                    Icon(
+                                        Icons.Rounded.Timer,
+                                        modifier = Modifier.padding(end = 6.dp),
+                                        contentDescription = stringResource(id = R.string.settings_startup_sound_duration),
+                                        tint = colorScheme.onBackground
+                                    )
+                                },
+                                endActions = {
+                                    Text(
+                                        text = stringResource(
+                                            id = R.string.settings_startup_sound_duration_value,
+                                            startupSoundDuration.roundToInt(),
+                                        ),
+                                        color = colorScheme.onSurfaceVariantActions,
+                                    )
+                                },
+                                onClick = {
+                                    showStartupSoundDurationSlider.value = !showStartupSoundDurationSlider.value
+                                },
+                                holdDownState = showStartupSoundDurationSlider.value,
+                                bottomAction = {
+                                    Slider(
+                                        value = startupSoundDuration,
+                                        onValueChange = {
+                                            startupSoundDuration = it
+                                            actions.onSetStartupSoundDurationSeconds(it.roundToInt())
+                                        },
+                                        valueRange = MIN_CUSTOM_STARTUP_SOUND_DURATION_SECONDS.toFloat()..
+                                            MAX_CUSTOM_STARTUP_SOUND_DURATION_SECONDS.toFloat(),
+                                        showKeyPoints = true,
+                                        keyPoints = listOf(5f, 10f, 15f, 30f),
+                                        magnetThreshold = 0.01f,
+                                        hapticEffect = SliderDefaults.SliderHapticEffect.Step,
+                                    )
+                                },
+                            )
                             ArrowPreference(
                                 title = stringResource(id = R.string.settings_startup_sound_preview),
                                 startAction = {

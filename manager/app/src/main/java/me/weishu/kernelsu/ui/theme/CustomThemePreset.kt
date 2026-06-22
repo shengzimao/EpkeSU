@@ -73,6 +73,7 @@ fun themePreferenceKey(
 fun defaultThemePresetForUiMode(uiMode: String): ThemePreset {
     return when (uiMode) {
         InterfaceStyle.Skrootpro.value -> ThemePreset.SKROOTPRO
+        InterfaceStyle.Alpha.value -> ThemePreset.ALPHA
         InterfaceStyle.LiquidGlass.value -> ThemePreset.LIQUID_GLASS
         else -> ThemePreset.CLEAN_TOOL
     }

@@ -153,10 +153,7 @@ fun readThemeStoreSummary(context: Context): ThemeStoreSummary {
 fun setThemeStoreImageSlot(context: Context, slot: ThemeStoreImageSlot, uriString: String?) {
     val prefs = themeStorePrefs(context)
     val previous = prefs.getString(slot.uriKey, null)
-    if (previous != uriString) {
-        releasePersistableImageReadPermission(context, previous)
-    }
-    prefs.edit {
+    prefs.edit(commit = true) {
         if (uriString.isNullOrBlank()) {
             remove(slot.uriKey)
             removeImageSlotCrop(slot)
@@ -165,10 +162,13 @@ fun setThemeStoreImageSlot(context: Context, slot: ThemeStoreImageSlot, uriStrin
             putImageSlotCrop(slot, DEFAULT_CUSTOM_WALLPAPER_CROP)
         }
     }
+    if (previous != uriString) {
+        releaseCustomImageReference(context, previous)
+    }
 }
 
 fun setThemeStoreImageSlotCrop(context: Context, slot: ThemeStoreImageSlot, crop: CustomWallpaperCrop) {
-    themeStorePrefs(context).edit {
+    themeStorePrefs(context).edit(commit = true) {
         putImageSlotCrop(slot, crop)
     }
 }
@@ -183,10 +183,7 @@ fun setThemeStoreWallpaper(
 ) {
     val prefs = themeStorePrefs(context)
     val previous = prefs.getString(CUSTOM_WALLPAPER_URI_KEY, null)
-    if (previous != uriString) {
-        releasePersistableImageReadPermission(context, previous)
-    }
-    prefs.edit {
+    prefs.edit(commit = true) {
         if (uriString.isNullOrBlank()) {
             remove(CUSTOM_WALLPAPER_URI_KEY)
             removeCustomWallpaperCrop()
@@ -201,10 +198,13 @@ fun setThemeStoreWallpaper(
             sanitizeCustomWallpaperPassthroughOpacity(passthroughOpacity),
         )
     }
+    if (previous != uriString) {
+        releaseCustomImageReference(context, previous)
+    }
 }
 
 fun setThemeStoreWallpaperCrop(context: Context, crop: CustomWallpaperCrop) {
-    themeStorePrefs(context).edit {
+    themeStorePrefs(context).edit(commit = true) {
         putCustomWallpaperCrop(crop)
     }
 }
@@ -424,10 +424,7 @@ fun importThemeStorePackage(context: Context, source: Uri): ThemeStorePackageRes
             pendingCards.forEach { (slot, pending) ->
                 val (importedUri, crop) = pending
                 val previous = prefs.getString(slot.uriKey, null)
-                if (previous != importedUri) {
-                    releasePersistableImageReadPermission(appContext, previous)
-                }
-                prefs.edit {
+                prefs.edit(commit = true) {
                     if (importedUri.isNullOrBlank()) {
                         remove(slot.uriKey)
                         removeImageSlotCrop(slot)
@@ -436,14 +433,14 @@ fun importThemeStorePackage(context: Context, source: Uri): ThemeStorePackageRes
                         putImageSlotCrop(slot, crop)
                     }
                 }
+                if (previous != importedUri) {
+                    releaseCustomImageReference(appContext, previous)
+                }
             }
 
             pendingWallpaper?.let { wallpaper ->
                 val previous = prefs.getString(CUSTOM_WALLPAPER_URI_KEY, null)
-                if (previous != wallpaper.uriString) {
-                    releasePersistableImageReadPermission(appContext, previous)
-                }
-                prefs.edit {
+                prefs.edit(commit = true) {
                     if (wallpaper.uriString.isNullOrBlank()) {
                         remove(CUSTOM_WALLPAPER_URI_KEY)
                         removeCustomWallpaperCrop()
@@ -454,6 +451,9 @@ fun importThemeStorePackage(context: Context, source: Uri): ThemeStorePackageRes
                     putFloat(CUSTOM_WALLPAPER_OPACITY_KEY, wallpaper.opacity)
                     putBoolean(CUSTOM_WALLPAPER_PASSTHROUGH_ENABLED_KEY, wallpaper.passthroughEnabled)
                     putFloat(CUSTOM_WALLPAPER_PASSTHROUGH_OPACITY_KEY, wallpaper.passthroughOpacity)
+                }
+                if (previous != wallpaper.uriString) {
+                    releaseCustomImageReference(appContext, previous)
                 }
             }
 
