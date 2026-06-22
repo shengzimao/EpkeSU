@@ -15,6 +15,9 @@ on:
           - sm8650
           - sm8750
           - sm8850
+          - mt6989-mt6897
+          - mt6991
+          - mt6993
         default: sm8750
       feature_set:
         description: "Feature set"
@@ -73,6 +76,45 @@ jobs:
     uses: ./.github/workflows/gki-prepare.yml
     with:
       config_file: .github/config/gki-oneplus-realme-sm8850.json
+      feature_set: ${{ inputs.feature_set }}
+      os_patch_level: ${{ inputs.os_patch_level }}
+      use_repo: ${{ inputs.use_repo }}
+      use_latest_susfs: ${{ inputs.use_latest_susfs }}
+      build_bypass: ${{ inputs.build_bypass }}
+    secrets: inherit
+
+  build-mt6989-mt6897:
+    name: MT6989/MT6897 android14-6.1.118
+    if: ${{ inputs.target_chip == 'All' || inputs.target_chip == 'mt6989-mt6897' }}
+    uses: ./.github/workflows/gki-prepare.yml
+    with:
+      config_file: .github/config/gki-oneplus-realme-mt6989-mt6897.json
+      feature_set: ${{ inputs.feature_set }}
+      os_patch_level: ${{ inputs.os_patch_level }}
+      use_repo: ${{ inputs.use_repo }}
+      use_latest_susfs: ${{ inputs.use_latest_susfs }}
+      build_bypass: ${{ inputs.build_bypass }}
+    secrets: inherit
+
+  build-mt6991:
+    name: MT6991 android15-6.6.89
+    if: ${{ inputs.target_chip == 'All' || inputs.target_chip == 'mt6991' }}
+    uses: ./.github/workflows/gki-prepare.yml
+    with:
+      config_file: .github/config/gki-oneplus-realme-mt6991.json
+      feature_set: ${{ inputs.feature_set }}
+      os_patch_level: ${{ inputs.os_patch_level }}
+      use_repo: ${{ inputs.use_repo }}
+      use_latest_susfs: ${{ inputs.use_latest_susfs }}
+      build_bypass: ${{ inputs.build_bypass }}
+    secrets: inherit
+
+  build-mt6993:
+    name: MT6993 android16-6.12.23
+    if: ${{ inputs.target_chip == 'All' || inputs.target_chip == 'mt6993' }}
+    uses: ./.github/workflows/gki-prepare.yml
+    with:
+      config_file: .github/config/gki-oneplus-realme-mt6993.json
       feature_set: ${{ inputs.feature_set }}
       os_patch_level: ${{ inputs.os_patch_level }}
       use_repo: ${{ inputs.use_repo }}
