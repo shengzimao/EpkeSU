@@ -1,0 +1,11 @@
+{
+  "version": "android15-6.6",
+  "variant": "OnePlus-Realme-SM8750",
+  "reference": "https://github.com/cctv18/oppo_oplus_realme_sm8750",
+  "include": [
+    {
+      "sublevel": "89",
+      "date": "2025-06"
+    }
+  ]
+}

@@ -70,7 +70,7 @@ jobs:
               kernel_version: kernelVersion,
               sublevel: item.sublevel,
               os_patch_level: item.date,
-              variant: "Normal",
+              variant: item.variant || cfg.variant || "Normal",
             };
             const key = JSON.stringify(entry);
             if (!seen.has(key)) {
