@@ -5,7 +5,6 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -21,8 +20,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -43,7 +40,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,8 +50,6 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -64,7 +58,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.entryProvider
@@ -76,8 +69,6 @@ import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import me.weishu.kernelsu.Natives
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.component.CustomWallpaperRoot
@@ -106,11 +97,7 @@ import me.weishu.kernelsu.ui.screen.launchericon.LauncherIconScreen
 import me.weishu.kernelsu.ui.screen.module.ModulePager
 import me.weishu.kernelsu.ui.screen.modulerepo.ModuleRepoDetailScreen
 import me.weishu.kernelsu.ui.screen.modulerepo.ModuleRepoScreen
-import me.weishu.kernelsu.ui.screen.navigationicon.NavigationIconScreen
-import me.weishu.kernelsu.ui.screen.settings.BackgroundSettingsScreen
-import me.weishu.kernelsu.ui.screen.settings.HomeCardWallpaperScreen
 import me.weishu.kernelsu.ui.screen.settings.SettingPager
-import me.weishu.kernelsu.ui.screen.settings.SoundEffectsScreen
 import me.weishu.kernelsu.ui.screen.sulog.SulogScreen
 import me.weishu.kernelsu.ui.screen.superuser.SuperUserPager
 import me.weishu.kernelsu.ui.screen.template.AppProfileTemplateScreen
@@ -120,28 +107,18 @@ import me.weishu.kernelsu.ui.theme.KernelSUTheme
 import me.weishu.kernelsu.ui.theme.ColorMode
 import me.weishu.kernelsu.ui.theme.LocalBlurIntensity
 import me.weishu.kernelsu.ui.theme.LocalColorMode
-import me.weishu.kernelsu.ui.theme.LocalDeltaColorVariant
 import me.weishu.kernelsu.ui.theme.LocalEnableBlur
 import me.weishu.kernelsu.ui.theme.LocalEnableFloatingBottomBar
 import me.weishu.kernelsu.ui.theme.LocalEnableFloatingBottomBarBlur
-import me.weishu.kernelsu.ui.util.BackgroundMusicPlayer
-import me.weishu.kernelsu.ui.util.ClickSoundPlayer
-import me.weishu.kernelsu.ui.util.KernelStatusEvents
-import me.weishu.kernelsu.ui.util.LocalCustomNavigationIcons
-import me.weishu.kernelsu.ui.util.ManagerUpdateChecker
-import me.weishu.kernelsu.ui.util.ManagerUpdateInfo
 import me.weishu.kernelsu.ui.util.getFileName
 import me.weishu.kernelsu.ui.util.install
 import me.weishu.kernelsu.ui.util.rememberBlurBackdrop
 import me.weishu.kernelsu.ui.util.rememberContentReady
 import me.weishu.kernelsu.ui.util.rootAvailable
 import me.weishu.kernelsu.ui.util.StartupSoundPlayer
-import me.weishu.kernelsu.ui.viewmodel.MainActivityUiState
 import me.weishu.kernelsu.ui.viewmodel.MainActivityViewModel
 import me.weishu.kernelsu.ui.viewmodel.MainPagerConfig
 import me.weishu.kernelsu.ui.webui.WebUIActivity
-import me.weishu.kernelsu.ui.util.CustomBackgroundState
-import me.weishu.kernelsu.ui.util.CustomPageBackgroundTarget
 import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
@@ -155,16 +132,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        runCatching { Natives.refreshInfo() }
-            .onFailure { Log.e(TAG, "refresh native info failed", it) }
-        val isManager = runCatching { Natives.isManager }.getOrDefault(false)
-        val requiresNewKernel = runCatching { Natives.requireNewKernel() }.getOrDefault(true)
-        if (isManager && !requiresNewKernel) {
-            lifecycleScope.launch(Dispatchers.IO) {
-                runCatching { install() }
-                    .onFailure { Log.e(TAG, "install ksud failed", it) }
-            }
-        }
+        val isManager = Natives.isManager
+        if (isManager && !Natives.requireNewKernel()) install()
 
         setContent {
             val viewModel = viewModel<MainActivityViewModel>()
@@ -174,26 +143,10 @@ class MainActivity : ComponentActivity() {
             val uiMode = uiState.uiMode
             val isLiquidGlassInterface = uiState.interfaceStyle == InterfaceStyle.LiquidGlass.value
             val startupAnimationUri = uiState.customStartupAnimationUri
-            val clickSoundUri = uiState.customClickSoundUri
-            val clickSoundVolume = uiState.customClickSoundVolume
-            val backgroundMusicUri = uiState.customBackgroundMusicUri
-            val backgroundMusicVolume = uiState.customBackgroundMusicVolume
             var showStartupAnimation by rememberSaveable { mutableStateOf(!startupAnimationUri.isNullOrBlank()) }
-            val effectiveEnableBlur = if (isLiquidGlassInterface) {
-                false
-            } else {
-                uiState.enableBlur
-            }
-            val effectiveEnableFloatingBottomBarBlur = if (isLiquidGlassInterface) {
-                false
-            } else {
-                uiState.enableFloatingBottomBarBlur
-            }
-            val darkMode = if (isLiquidGlassInterface) {
-                false
-            } else {
-                appSettings.colorMode.isDark || (appSettings.colorMode.isSystem && isSystemInDarkTheme())
-            }
+            val effectiveEnableBlur = !isLiquidGlassInterface && uiState.enableBlur
+            val effectiveEnableFloatingBottomBarBlur = !isLiquidGlassInterface && uiState.enableFloatingBottomBarBlur
+            val darkMode = !isLiquidGlassInterface && (appSettings.colorMode.isDark || (appSettings.colorMode.isSystem && isSystemInDarkTheme()))
 
             DisposableEffect(darkMode) {
                 enableEdgeToEdge(
@@ -208,20 +161,6 @@ class MainActivity : ComponentActivity() {
                 )
                 window.isNavigationBarContrastEnforced = false
                 onDispose { }
-            }
-
-            LaunchedEffect(clickSoundUri) {
-                if (clickSoundUri.isNullOrBlank()) {
-                    ClickSoundPlayer.release()
-                }
-            }
-
-            LaunchedEffect(backgroundMusicUri, backgroundMusicVolume) {
-                if (backgroundMusicUri.isNullOrBlank()) {
-                    BackgroundMusicPlayer.stop()
-                } else {
-                    BackgroundMusicPlayer.play(this@MainActivity, backgroundMusicUri, backgroundMusicVolume)
-                }
             }
 
             val navigator = rememberNavigator(Route.Main)
@@ -243,12 +182,9 @@ class MainActivity : ComponentActivity() {
                 LocalEnableFloatingBottomBarBlur provides effectiveEnableFloatingBottomBarBlur,
                 LocalUiMode provides uiMode,
                 LocalInterfaceStyle provides uiState.interfaceStyle,
-                LocalDeltaColorVariant provides uiState.deltaColorVariant,
-                LocalCustomNavigationIcons provides uiState.customNavigationIcons,
             ) {
                 KernelSUTheme(appSettings = appSettings, uiMode = uiMode) {
                     HandleDeepLink(intentState = intentState.collectAsStateWithLifecycle())
-                    ManagerUpdatePrompt()
                     ZipFileIntentHandler(intentState = intentState, isManager = isManager)
                     ShortcutIntentHandler(intentState = intentState)
                     val mainScreenEntry = @Composable {
@@ -285,10 +221,6 @@ class MainActivity : ComponentActivity() {
                                 entry<Route.Sulog> { SulogScreen() }
                                 entry<Route.ColorPalette> { ColorPaletteScreen() }
                                 entry<Route.LauncherIcon> { LauncherIconScreen() }
-                                entry<Route.NavigationIcons> { NavigationIconScreen() }
-                                entry<Route.Backgrounds> { BackgroundSettingsScreen() }
-                                entry<Route.SoundEffects> { SoundEffectsScreen() }
-                                entry<Route.HomeCardWallpapers> { HomeCardWallpaperScreen() }
                                 entry<Route.ThemeStore> { ThemeStoreScreen() }
                                 entry<Route.AppProfileTemplate> { AppProfileTemplateScreen() }
                                 entry<Route.TemplateEditor> { key -> TemplateEditorScreen(key.template, key.readOnly) }
@@ -315,30 +247,17 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                     val globalGlassBackdrop = rememberBlurBackdrop(effectiveEnableBlur)
-                    val effectiveBackground = uiState.effectiveCustomBackground(selectedMainPage)
 
                     Box(modifier = Modifier.fillMaxSize()) {
                         CustomWallpaperRoot(
-                            uriString = effectiveBackground.wallpaperUriString,
-                            videoUriString = effectiveBackground.videoUriString,
-                            videoDurationSeconds = effectiveBackground.videoDurationSeconds,
-                            opacity = effectiveBackground.opacity,
-                            crop = effectiveBackground.crop,
+                            uriString = uiState.customWallpaperUri,
+                            opacity = uiState.customWallpaperOpacity,
+                            crop = uiState.customWallpaperCrop,
                             passthroughEnabled = uiState.customWallpaperPassthroughEnabled,
                             passthroughOpacity = uiState.customWallpaperPassthroughOpacity,
                         ) {
                             CompositionLocalProvider(LocalLiquidGlassBackdrop provides globalGlassBackdrop) {
-                                Box(
-                                    modifier = Modifier
-                                        .customClickSound(clickSoundUri, clickSoundVolume)
-                                        .then(
-                                            if (globalGlassBackdrop != null) {
-                                                Modifier.layerBackdrop(globalGlassBackdrop)
-                                            } else {
-                                                Modifier
-                                            }
-                                        )
-                                ) {
+                                Box(modifier = if (globalGlassBackdrop != null) Modifier.layerBackdrop(globalGlassBackdrop) else Modifier) {
                                     when (uiMode) {
                                         UiMode.Material -> androidx.compose.material3.Scaffold(
                                             containerColor = Color.Transparent
@@ -366,21 +285,6 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         StartupSoundPlayer.playConfigured(this)
-        BackgroundMusicPlayer.playConfigured(this)
-    }
-
-    override fun onStop() {
-        StartupSoundPlayer.stop()
-        ClickSoundPlayer.release()
-        BackgroundMusicPlayer.stop()
-        super.onStop()
-    }
-
-    override fun onDestroy() {
-        StartupSoundPlayer.stop()
-        ClickSoundPlayer.release()
-        BackgroundMusicPlayer.stop()
-        super.onDestroy()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -391,95 +295,8 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private fun MainActivityUiState.effectiveCustomBackground(mainPage: Int): CustomBackgroundState {
-    val pageBackground = CustomPageBackgroundTarget.fromMainPageIndex(mainPage)
-        ?.let { customPageBackgrounds[it] }
-        ?.takeIf { it.hasMedia }
-    if (pageBackground != null) {
-        return pageBackground
-    }
-
-    return CustomBackgroundState(
-        wallpaperUriString = customWallpaperUri,
-        videoUriString = customVideoBackgroundUri,
-        opacity = customWallpaperOpacity,
-        crop = customWallpaperCrop,
-        videoDurationSeconds = customVideoBackgroundDurationSeconds,
-    )
-}
-
-@Composable
-private fun ManagerUpdatePrompt() {
-    val context = LocalContext.current
-    var updateInfo by remember { mutableStateOf<ManagerUpdateInfo?>(null) }
-    val updateDialog = rememberConfirmDialog(
-        onConfirm = {
-            updateInfo?.let { ManagerUpdateChecker.download(context, it) }
-        },
-        onDismiss = { updateInfo = null },
-    )
-
-    LaunchedEffect(Unit) {
-        val latest = ManagerUpdateChecker.checkLatest(context) ?: return@LaunchedEffect
-        updateInfo = latest
-        updateDialog.showConfirm(
-            title = context.getString(R.string.manager_update_title),
-            content = formatManagerUpdateMessage(context, latest),
-            markdown = latest.changelog.isNotBlank(),
-            confirm = context.getString(R.string.download),
-        )
-    }
-}
-
-private fun formatManagerUpdateMessage(context: android.content.Context, updateInfo: ManagerUpdateInfo): String {
-    val version = context.getString(
-        R.string.manager_update_message,
-        updateInfo.versionName,
-        updateInfo.versionCode
-    )
-    val changelog = updateInfo.changelog.trim().take(MAX_MANAGER_UPDATE_CHANGELOG_LENGTH)
-    if (changelog.isBlank()) {
-        return version
-    }
-    return context.getString(R.string.manager_update_changelog, version, changelog)
-}
-
-@Composable
-private fun Modifier.customClickSound(uriString: String?, volume: Float): Modifier {
-    if (uriString.isNullOrBlank()) return this
-    val context = LocalContext.current.applicationContext
-    return pointerInput(uriString, volume) {
-        awaitEachGesture {
-            val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-            val startPosition = down.position
-            var wasConsumed = down.isConsumed
-            var moved = false
-            var completed = false
-
-            while (true) {
-                val event = awaitPointerEvent(PointerEventPass.Final)
-                val change = event.changes.firstOrNull { it.id == down.id } ?: break
-                wasConsumed = wasConsumed || change.isConsumed
-                if ((change.position - startPosition).getDistance() > viewConfiguration.touchSlop) {
-                    moved = true
-                }
-                if (!change.pressed) {
-                    completed = true
-                    break
-                }
-            }
-
-            if (wasConsumed && completed && !moved) {
-                ClickSoundPlayer.play(context, uriString, volume)
-            }
-        }
-    }
-}
-
 private const val NAV_TRANSITION_DURATION_MS = 220
 private const val NAV_EXIT_TRANSITION_DURATION_MS = 170
-private const val MAX_MANAGER_UPDATE_CHANGELOG_LENGTH = 4000
-private const val TAG = "MainActivity"
 
 private fun <T : Any> stableNavForwardTransition(): AnimatedContentTransitionScope<Scene<T>>.() -> ContentTransform = {
     stableNavForwardTransitionContentTransform()
@@ -555,23 +372,16 @@ fun MainScreen(
     val enableBlur = LocalEnableBlur.current
     val enableFloatingBottomBar = LocalEnableFloatingBottomBar.current
     val enableFloatingBottomBarBlur = LocalEnableFloatingBottomBarBlur.current
-    val refreshTick by KernelStatusEvents.refreshTick.collectAsStateWithLifecycle()
     val pagerState = rememberPagerState(initialPage = initialPage, pageCount = { MainPagerConfig.PAGE_COUNT })
     val mainPagerState = rememberMainPagerState(pagerState)
-    val isFullFeatured by produceState(initialValue = false, refreshTick) {
-        val fullFeatured = kotlinx.coroutines.withContext(Dispatchers.IO) {
-            runCatching { Natives.refreshInfo() }
-            runCatching {
-                Natives.isManager && !Natives.requireNewKernel() && rootAvailable()
-            }.getOrDefault(false)
-        }
-        value = fullFeatured
-    }
+    val isManager = Natives.isManager
+    val isFullFeatured = isManager && !Natives.requireNewKernel() && rootAvailable()
     var userScrollEnabled by remember(isFullFeatured) { mutableStateOf(isFullFeatured) }
     val uiMode = LocalUiMode.current
-    val surfaceColor = when (uiMode) {
-        UiMode.Material -> MaterialTheme.colorScheme.surface // Blur is not used in Material, this is just a placeholder
-        UiMode.Miuix -> liquidGlassBackdropColor()
+    val surfaceColor = if (uiMode == UiMode.Miuix) {
+        liquidGlassBackdropColor()
+    } else {
+        MaterialTheme.colorScheme.surface
     }
     val blurBackdrop = rememberBlurBackdrop(enableBlur)
     val floatingBarBackdrop = if (enableFloatingBottomBar && enableFloatingBottomBarBlur) {
@@ -729,7 +539,7 @@ private fun ZipFileIntentHandler(
     val context = LocalContext.current
     var zipUri by remember { mutableStateOf<Uri?>(null) }
     var isAnyKernel by remember { mutableStateOf(false) }
-    val isSafeMode = runCatching { Natives.isSafeMode }.getOrDefault(false)
+    val isSafeMode = Natives.isSafeMode
     val clearZipUri = {
         zipUri = null
         isAnyKernel = false

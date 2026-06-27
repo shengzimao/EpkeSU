@@ -44,7 +44,7 @@ fun ChooseKmiDialogMaterial(
             }
         }
     }
-    val defaultKmi = remember(displayKmis, currentKmi) {
+    val defaultKmi = remember(currentKmi) {
         currentKmi.takeIf { it in displayKmis } ?: displayKmis.firstOrNull().orEmpty()
     }
     val selectedKmi = remember(defaultKmi) { mutableStateOf(defaultKmi) }

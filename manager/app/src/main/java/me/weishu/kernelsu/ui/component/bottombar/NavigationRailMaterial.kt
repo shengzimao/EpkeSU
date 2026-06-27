@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.union
 import androidx.compose.material.icons.Icons
@@ -25,28 +24,29 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
+import me.weishu.kernelsu.Natives
+import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.LocalMainPagerState
-import me.weishu.kernelsu.ui.component.CustomNavigationIconImage
-import me.weishu.kernelsu.ui.util.CustomNavigationIconSlot
-import me.weishu.kernelsu.ui.util.LocalCustomNavigationIcons
+import me.weishu.kernelsu.ui.util.rootAvailable
 
 @Composable
 fun NavigationRailMaterial(
     modifier: Modifier = Modifier,
 ) {
-    val fullFeatured = hasFullFeaturedManager()
+    val isManager = Natives.isManager
+    val fullFeatured = remember(isManager) {
+        isManager && !Natives.requireNewKernel() && rootAvailable()
+    }
     val mainPagerState = LocalMainPagerState.current
 
     if (!fullFeatured) return
 
     val items = listOf(
-        MaterialRailDestination(CustomNavigationIconSlot.Home, Icons.Filled.Home, Icons.Outlined.Home),
-        MaterialRailDestination(CustomNavigationIconSlot.Superuser, Icons.Filled.Shield, Icons.Outlined.Shield),
-        MaterialRailDestination(CustomNavigationIconSlot.Module, Icons.Filled.Extension, Icons.Outlined.Extension),
-        MaterialRailDestination(CustomNavigationIconSlot.Settings, Icons.Filled.Settings, Icons.Outlined.Settings),
+        Triple(R.string.home, Icons.Filled.Home, Icons.Outlined.Home),
+        Triple(R.string.superuser, Icons.Filled.Shield, Icons.Outlined.Shield),
+        Triple(R.string.module, Icons.Filled.Extension, Icons.Outlined.Extension),
+        Triple(R.string.settings, Icons.Filled.Settings, Icons.Outlined.Settings)
     )
-    val customIcons = LocalCustomNavigationIcons.current
 
     NavigationRail(
         modifier = modifier.fillMaxHeight(),
@@ -55,9 +55,8 @@ fun NavigationRailMaterial(
         )
     ) {
         Spacer(Modifier.weight(1f))
-        items.forEachIndexed { index, item ->
+        items.forEachIndexed { index, (label, selectedIcon, unselectedIcon) ->
             val selected = mainPagerState.selectedPage == index
-            val label = stringResource(item.slot.labelRes)
             NavigationRailItem(
                 selected = selected,
                 onClick = {
@@ -66,27 +65,14 @@ fun NavigationRailMaterial(
                     }
                 },
                 icon = {
-                    CustomNavigationIconImage(
-                        state = customIcons[item.slot],
-                        contentDescription = label,
-                        modifier = Modifier.size(26.dp),
-                        alpha = if (selected) 1f else 0.68f,
-                    ) {
-                        Icon(
-                            if (selected) item.selectedIcon else item.unselectedIcon,
-                            label
-                        )
-                    }
+                    Icon(
+                        if (selected) selectedIcon else unselectedIcon,
+                        stringResource(label)
+                    )
                 },
-                label = { Text(label) }
+                label = { Text(stringResource(label)) }
             )
         }
         Spacer(Modifier.weight(1f))
     }
 }
-
-private data class MaterialRailDestination(
-    val slot: CustomNavigationIconSlot,
-    val selectedIcon: androidx.compose.ui.graphics.vector.ImageVector,
-    val unselectedIcon: androidx.compose.ui.graphics.vector.ImageVector,
-)
