@@ -47,7 +47,8 @@ fun isLiquidGlassTheme(): Boolean {
 @Composable
 @ReadOnlyComposable
 fun liquidGlassBackdropColor(): Color {
-    return if (isLiquidGlassTheme()) LiquidGlassTokens.Background else MiuixTheme.colorScheme.surface
+    val isLiquidGlass = isLiquidGlassTheme()
+    return if (isLiquidGlass) LiquidGlassTokens.Background else MiuixTheme.colorScheme.surface
 }
 
 fun Modifier.liquidGlassSurface(
@@ -134,35 +135,45 @@ fun Modifier.globalLiquidGlassSurface(
     chromaticAberration: Float = 0.22f,
     strokeAlpha: Float = 0.70f,
 ): Modifier {
-    if (!isLiquidGlassTheme()) return this
-    val blurIntensity = LocalBlurIntensity.current
-    return liquidGlassSurface(
-        backdrop = LocalLiquidGlassBackdrop.current,
-        shape = shape,
-        surfaceColor = surfaceColor,
-        surfaceAlpha = surfaceAlpha,
-        blurRadius = blurRadius * blurIntensity,
-        enableRefraction = enableRefraction,
-        refractionHeight = refractionHeight,
-        refractionAmount = refractionAmount,
-        chromaticAberration = chromaticAberration,
-        strokeAlpha = strokeAlpha,
-    )
+    val isLiquidGlass = isLiquidGlassTheme()
+    return if (isLiquidGlass) {
+        val blurIntensity = LocalBlurIntensity.current
+        liquidGlassSurface(
+            backdrop = LocalLiquidGlassBackdrop.current,
+            shape = shape,
+            surfaceColor = surfaceColor,
+            surfaceAlpha = surfaceAlpha,
+            blurRadius = blurRadius * blurIntensity,
+            enableRefraction = enableRefraction,
+            refractionHeight = refractionHeight,
+            refractionAmount = refractionAmount,
+            chromaticAberration = chromaticAberration,
+            strokeAlpha = strokeAlpha,
+        )
+    } else {
+        this
+    }
 }
 
 @Composable
 fun liquidGlassMiuixCardColors(
     color: Color = MiuixTheme.colorScheme.surfaceContainer,
-) = MiuixCardDefaults.defaultColors(
-    color = if (isLiquidGlassTheme()) Color.Transparent else color
-)
+): MiuixCardDefaults.ColorScheme {
+    val isLiquidGlass = isLiquidGlassTheme()
+    return MiuixCardDefaults.defaultColors(
+        color = if (isLiquidGlass) Color.Transparent else color
+    )
+}
 
 @Composable
 fun liquidGlassMaterialCardColors(
     containerColor: Color,
-) = MaterialCardDefaults.cardColors(
-    containerColor = if (isLiquidGlassTheme()) Color.Transparent else containerColor
-)
+): MaterialCardDefaults.ColorScheme {
+    val isLiquidGlass = isLiquidGlassTheme()
+    return MaterialCardDefaults.cardColors(
+        containerColor = if (isLiquidGlass) Color.Transparent else containerColor
+    )
+}
 
 @Composable
 fun Modifier.globalLiquidGlassButton(): Modifier {
